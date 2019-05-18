@@ -5,3 +5,7 @@ authors = ["sn2234 <sn2234@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+serde_derive="*"
+serde="*"
+serde_json="*"
+log="*"

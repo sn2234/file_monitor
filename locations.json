@@ -1,0 +1,14 @@
+{
+    "locations":[
+        {
+            "file":{
+                "input":"input",
+                "processing":"processing",
+                "finished":"finished",
+                "failed":"failed"
+            },
+            "readinessDelay":1000,
+            "process":"command"
+        }
+    ]
+}
