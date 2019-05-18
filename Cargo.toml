@@ -9,3 +9,4 @@ serde_derive="*"
 serde="*"
 serde_json="*"
 log="*"
+log4rs={version="*", features=["rolling_file_appender"]}
