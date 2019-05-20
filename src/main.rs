@@ -5,13 +5,18 @@ extern crate log;
 extern crate log4rs;
 
 mod locations;
+mod processor;
 
 fn main() {
     initLogging();
 
     info!("Starting application");
 
-    println!("Hello, world!");
+    let locationsConfig = locations::Locations::fromFile("locations.json").unwrap();
+
+    info!("Config: {:?}", locationsConfig);
+
+    processor::processLocations(locationsConfig);
 }
 
 fn initLogging() {
