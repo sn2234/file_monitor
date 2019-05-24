@@ -17,7 +17,7 @@ pub fn processLocations(locations : Locations) {
                         location, err));
             }
         }
-        
+
         thread::sleep(time::Duration::from_millis(locations.polling_delay.into()));
     }
 }
@@ -28,7 +28,7 @@ fn checkLocation(location : &Location) -> bool {
 }
 
 fn processLocation(location : &Location) -> Result<(), Box<dyn Error>> {
-    info!("Processing location: {:?}", location);
+    trace!("Processing location: {:?}", location);
 
     // Process items in input folder
     let _ = processFolder(&location.file.input, |item| processInputItem(&item, location))
@@ -49,7 +49,7 @@ fn processFolder<P, Fx>(path: P, processItem : Fx) ->
         P: AsRef<Path> + Copy,
         Fx: Fn(&std::fs::DirEntry) -> Result<(), Box<dyn Error>>
 {
-    info!("Processing folder: {:?}", path.as_ref());
+    trace!("Processing folder: {:?}", path.as_ref());
     for entry in fs::read_dir(path)? {
         match entry {
             Ok(item) => {

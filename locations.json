@@ -8,7 +8,7 @@
                 "failed":"C:\\Temp\\process_test\\failed"
             },
             "readinessDelay":1000,
-            "process":"test.cmd",
+            "process":"test.cmd notepad",
             "shell_command":true,
             "processing_timestamp":true,
             "current_dir":"C:\\Temp\\process_test\\"
