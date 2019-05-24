@@ -4,11 +4,14 @@
             "file":{
                 "input":"C:\\Temp\\process_test\\input",
                 "processing":"C:\\Temp\\process_test\\processing",
-                "finished":"C:\\Temp\\process_test\\completed",
+                "completed":"C:\\Temp\\process_test\\completed",
                 "failed":"C:\\Temp\\process_test\\failed"
             },
             "readinessDelay":1000,
-            "process":"notepad"
+            "process":"test.cmd",
+            "shell_command":true,
+            "processing_timestamp":true,
+            "current_dir":"C:\\Temp\\process_test\\"
         }
     ]
 }

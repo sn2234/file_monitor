@@ -10,7 +10,7 @@ use std::path::Path;
 pub struct FileTask {
     pub input : String,
     pub processing : String,
-    pub finished : Option<String>,
+    pub completed : Option<String>,
     pub failed : Option<String>
 }
 
@@ -18,7 +18,10 @@ pub struct FileTask {
 pub struct Location {
     pub file : FileTask,
     pub readinessDelay : u32,
-    pub process : String
+    pub process : String,
+    pub shell_command : bool,
+    pub processing_timestamp : bool,
+    pub current_dir: Option<String>
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -71,22 +74,25 @@ mod tests {
 
         assert_eq!(1000, loc.locations[0].readinessDelay);
         assert_eq!("command", loc.locations[0].process);
+        assert_eq!(true, loc.locations[0].shell_command);
+        assert_eq!(false, loc.locations[0].processing_timestamp);
+        assert_eq!(Some("current_dir".to_owned()), loc.locations[0].current_dir);
         assert_eq!(FileTask {
             input:"input".to_string(),
             processing: "processing".to_string(),
-            finished: Some("finished".to_string()),
+            completed: Some("completed".to_string()),
             failed: Some("failed".to_string())
         }, loc.locations[0].file);
         assert_eq!(FileTask {
             input:"input".to_string(),
             processing: "processing".to_string(),
-            finished: None,
+            completed: None,
             failed: Some("failed".to_string())
         }, loc.locations[1].file);
         assert_eq!(FileTask {
             input:"input".to_string(),
             processing: "processing".to_string(),
-            finished: Some("finished".to_string()),
+            completed: Some("completed".to_string()),
             failed: None
         }, loc.locations[2].file);
     }

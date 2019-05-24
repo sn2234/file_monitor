@@ -3,6 +3,7 @@
 #[macro_use]
 extern crate log;
 extern crate log4rs;
+extern crate chrono;
 
 mod locations;
 mod processor;

@@ -4,11 +4,14 @@
             "file":{
                 "input":"input",
                 "processing":"processing",
-                "finished":"finished",
+                "completed":"completed",
                 "failed":"failed"
             },
             "readinessDelay":1000,
-            "process":"command"
+            "process":"command",
+            "shell_command":true,
+            "processing_timestamp":false,
+            "current_dir":"current_dir"
         },
         {
             "file":{
@@ -17,16 +20,20 @@
                 "failed":"failed"
             },
             "readinessDelay":100,
-            "process":"command"
+            "process":"command",
+            "shell_command":true,
+            "processing_timestamp":false
         },
         {
             "file":{
                 "input":"input",
                 "processing":"processing",
-                "finished":"finished"
+                "completed":"completed"
             },
             "readinessDelay":10,
-            "process":"command"
+            "process":"command",
+            "shell_command":true,
+            "processing_timestamp":false
         }
     ]
 }

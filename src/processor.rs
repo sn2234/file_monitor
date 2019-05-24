@@ -1,9 +1,10 @@
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::error::Error;
 use std::{thread, time};
 use std::process::Command;
+use chrono::{DateTime, Local};
 
 use crate::locations::{Location, Locations};
 
@@ -83,7 +84,15 @@ fn processInputItem(item : &fs::DirEntry, location : &Location) -> Result<(), Bo
                 initialMetadata = metadata;
             }
 
-            let processingFilePath = Path::new(&location.file.processing).join(fileName);
+            let resultingFileName = if location.processing_timestamp {
+                addTimestamp(fileName)
+            }
+            else {
+                PathBuf::from(fileName)
+            };
+
+            let processingFilePath = Path::new(&location.file.processing)
+                .join(resultingFileName);
 
             info!("Moving to processing folder: {:?}", processingFilePath);
 
@@ -105,9 +114,10 @@ fn processStagingItem(item : &fs::DirEntry, location : &Location) -> Result<(), 
     let itemPath = item.path();
     info!("Executing {:?} on {:?}", location.process, itemPath);
 
-    let output = Command::new(&location.process)
-                     .arg(&itemPath)
-                     .output()?;
+    let mut command = prepareCommand(&itemPath, location); 
+    debug!("Command to execute: {:?}", command);
+
+    let output = command.output()?;
     
     info!("Command returned: {:?}", output.status);
 
@@ -115,7 +125,7 @@ fn processStagingItem(item : &fs::DirEntry, location : &Location) -> Result<(), 
         if let Some(fileName) = itemPath.file_name() {
 
             let destinationDir = if output.status.success() {
-                &location.file.finished
+                &location.file.completed
             }
             else {
                 &location.file.failed
@@ -135,4 +145,66 @@ fn processStagingItem(item : &fs::DirEntry, location : &Location) -> Result<(), 
     }
 
     Ok(())
+}
+
+fn prepareCommand<P>(path: P, location : &Location) -> Command
+    where
+        P: Copy + std::convert::AsRef<std::ffi::OsStr>
+{
+    let mut cmd = if location.shell_command {
+        let mut cmd = if cfg!(target_os = "windows") {
+                let mut cmd = Command::new("cmd");
+                cmd.arg("/C");
+                cmd
+            }
+            else {
+                let mut cmd = Command::new("sh");
+                cmd.arg("-c");
+                cmd
+            };
+        cmd.arg(&location.process);
+        cmd
+    }
+    else {
+        Command::new(&location.process)
+    };
+
+    cmd.arg(path);
+
+    if let Some(currentDir) = &location.current_dir {
+        cmd.current_dir(currentDir);
+    }
+
+    cmd
+}
+
+fn addTimestamp<P>(fileName: P) -> PathBuf
+    where
+        P: AsRef<Path> + Copy,
+        std::path::PathBuf: std::convert::From<P>
+{
+    let mut path = PathBuf::from(fileName);
+
+    if let Some(origFileName) = fileName.as_ref().file_stem() {
+        if let Some(origFileNameStr) = origFileName.to_str() {
+            let now: DateTime<Local> = Local::now();
+            let timestampSuffix = now.format("%Y-%m-%d_%H-%M-%S");
+
+            let extension = fileName
+                        .as_ref()
+                        .extension()
+                        .and_then(|x| x.to_str())
+                        .map(|x| ".".to_owned() + x)
+                        .unwrap_or("".to_owned());
+
+            path.set_file_name(
+                format!("{}_{}{}",
+                    origFileNameStr,
+                    timestampSuffix,
+                    extension
+            ));
+        }
+    }
+
+    path
 }
