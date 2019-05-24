@@ -9,12 +9,16 @@ use chrono::{DateTime, Local};
 use crate::locations::{Location, Locations};
 
 pub fn processLocations(locations : Locations) {
-    for location in &locations.locations {
-        if checkLocation(location) {
-            let _ = processLocation(location)
-                .map_err(|err| error!("Error processing location: {:?}, message: {:?}",
-                    location, err));
+    loop {
+        for location in &locations.locations {
+            if checkLocation(location) {
+                let _ = processLocation(location)
+                    .map_err(|err| error!("Error processing location: {:?}, message: {:?}",
+                        location, err));
+            }
         }
+        
+        thread::sleep(time::Duration::from_millis(locations.polling_delay.into()));
     }
 }
 

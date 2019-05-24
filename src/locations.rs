@@ -26,7 +26,8 @@ pub struct Location {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Locations {
-    pub locations : Vec<Location>
+    pub locations : Vec<Location>,
+    pub polling_delay : u32
 }
 
 impl Locations {
@@ -77,6 +78,7 @@ mod tests {
         assert_eq!(true, loc.locations[0].shell_command);
         assert_eq!(false, loc.locations[0].processing_timestamp);
         assert_eq!(Some("current_dir".to_owned()), loc.locations[0].current_dir);
+        assert_eq!(2000, loc.polling_delay);
         assert_eq!(FileTask {
             input:"input".to_string(),
             processing: "processing".to_string(),

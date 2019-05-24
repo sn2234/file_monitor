@@ -13,5 +13,6 @@
             "processing_timestamp":true,
             "current_dir":"C:\\Temp\\process_test\\"
         }
-    ]
+    ],
+    "polling_delay":2000
 }
