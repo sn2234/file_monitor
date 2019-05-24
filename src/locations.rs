@@ -17,7 +17,7 @@ pub struct FileTask {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Location {
     pub file : FileTask,
-    pub readinessDelay : i32,
+    pub readinessDelay : u32,
     pub process : String
 }
 

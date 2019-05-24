@@ -2,13 +2,13 @@
     "locations":[
         {
             "file":{
-                "input":"input",
-                "processing":"processing",
-                "finished":"finished",
-                "failed":"failed"
+                "input":"C:\\Temp\\process_test\\input",
+                "processing":"C:\\Temp\\process_test\\processing",
+                "finished":"C:\\Temp\\process_test\\completed",
+                "failed":"C:\\Temp\\process_test\\failed"
             },
             "readinessDelay":1000,
-            "process":"command"
+            "process":"notepad"
         }
     ]
 }
