@@ -118,32 +118,34 @@ fn processStagingItem(item : &fs::DirEntry, location : &Location) -> Result<(), 
     let itemPath = item.path();
     info!("Executing {:?} on {:?}", location.process, itemPath);
 
-    let mut command = prepareCommand(&itemPath, location); 
-    debug!("Command to execute: {:?}", command);
+    if let Some(strPath) = itemPath.to_str() {
+        let mut command = prepareCommand(&strPath, location); 
+        debug!("Command to execute: {:?}", command);
 
-    let output = command.output()?;
-    
-    info!("Command returned: {:?}", output.status);
+        let output = command.output()?;
+        
+        info!("Command returned: {:?}", output.status);
 
-    if itemPath.exists() {
-        if let Some(fileName) = itemPath.file_name() {
+        if itemPath.exists() {
+            if let Some(fileName) = itemPath.file_name() {
 
-            let destinationDir = if output.status.success() {
-                &location.file.completed
-            }
-            else {
-                &location.file.failed
-            };
+                let destinationDir = if output.status.success() {
+                    &location.file.completed
+                }
+                else {
+                    &location.file.failed
+                };
 
-            if let Some(realDesinationDir) = destinationDir {
-                let destinationFilePath = Path::new(realDesinationDir)
-                    .join(fileName);
-                info!("Moving to destination: {:?} => {:?}", itemPath, destinationFilePath);
-                fs::rename(itemPath, destinationFilePath)?;
-            }
-            else {
-                info!("Destination is empty, removing {:?}", itemPath);
-                fs::remove_file(itemPath)?;
+                if let Some(realDesinationDir) = destinationDir {
+                    let destinationFilePath = Path::new(realDesinationDir)
+                        .join(fileName);
+                    info!("Moving to destination: {:?} => {:?}", itemPath, destinationFilePath);
+                    fs::rename(itemPath, destinationFilePath)?;
+                }
+                else {
+                    info!("Destination is empty, removing {:?}", itemPath);
+                    fs::remove_file(itemPath)?;
+                }
             }
         }
     }
@@ -151,10 +153,10 @@ fn processStagingItem(item : &fs::DirEntry, location : &Location) -> Result<(), 
     Ok(())
 }
 
-fn prepareCommand<P>(path: P, location : &Location) -> Command
-    where
-        P: Copy + std::convert::AsRef<std::ffi::OsStr>
+fn prepareCommand(path: &str, location : &Location) -> Command
 {
+    let fullArg = location.process.clone() + path;
+
     let mut cmd = if location.shell_command {
         let mut cmd = if cfg!(target_os = "windows") {
                 let mut cmd = Command::new("cmd");
@@ -166,14 +168,12 @@ fn prepareCommand<P>(path: P, location : &Location) -> Command
                 cmd.arg("-c");
                 cmd
             };
-        cmd.arg(&location.process);
+        cmd.arg(fullArg);
         cmd
     }
     else {
-        Command::new(&location.process)
+        Command::new(fullArg)
     };
-
-    cmd.arg(path);
 
     if let Some(currentDir) = &location.current_dir {
         cmd.current_dir(currentDir);
