@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::error::Error;
 use std::{thread, time};
-use std::process::Command;
+use std::process::{Command, Output};
 use chrono::{DateTime, Local};
 
 use crate::locations::{Location, Locations};
@@ -124,7 +124,7 @@ fn processStagingItem(item : &fs::DirEntry, location : &Location) -> Result<(), 
 
         let output = command.output()?;
         
-        info!("Command returned: {:?}", output.status);
+        logProcessOutput(&output);
 
         if itemPath.exists() {
             if let Some(fileName) = itemPath.file_name() {
@@ -137,6 +137,14 @@ fn processStagingItem(item : &fs::DirEntry, location : &Location) -> Result<(), 
                 };
 
                 if let Some(realDesinationDir) = destinationDir {
+
+                    let fileName = if location.complete_timestamp {
+                        addTimestamp(fileName)
+                    }
+                    else {
+                        PathBuf::from(fileName)
+                    };
+
                     let destinationFilePath = Path::new(realDesinationDir)
                         .join(fileName);
                     info!("Moving to destination: {:?} => {:?}", itemPath, destinationFilePath);
@@ -153,9 +161,21 @@ fn processStagingItem(item : &fs::DirEntry, location : &Location) -> Result<(), 
     Ok(())
 }
 
+fn logProcessOutput(output : & Output) {
+    info!("Command exit code: {:?}", output.status);
+
+    if output.stdout.len() > 0 {
+        info!("Stdout: {}", String::from_utf8_lossy(&output.stdout))
+    }
+
+    if output.stderr.len() > 0 {
+        info!("Stderr: {}", String::from_utf8_lossy(&output.stderr))
+    }
+}
+
 fn prepareCommand(path: &str, location : &Location) -> Command
 {
-    let fullArg = location.process.clone() + path;
+    let fullArg = location.process.clone() + " " + path;
 
     let mut cmd = if location.shell_command {
         let mut cmd = if cfg!(target_os = "windows") {

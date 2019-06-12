@@ -11,6 +11,7 @@
             "process":"test.cmd notepad",
             "shell_command":true,
             "processing_timestamp":true,
+            "complete_timestamp":true,
             "current_dir":"C:\\Temp\\process_test\\"
         }
     ],

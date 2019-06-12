@@ -11,6 +11,7 @@
             "process":"command",
             "shell_command":true,
             "processing_timestamp":false,
+            "complete_timestamp":false,
             "current_dir":"current_dir"
         },
         {
@@ -22,6 +23,7 @@
             "readinessDelay":100,
             "process":"command",
             "shell_command":true,
+            "complete_timestamp":false,
             "processing_timestamp":false
         },
         {
@@ -33,7 +35,8 @@
             "readinessDelay":10,
             "process":"command",
             "shell_command":true,
-            "processing_timestamp":false
+            "processing_timestamp":false,
+            "complete_timestamp":false
         }
     ],
     "polling_delay":2000

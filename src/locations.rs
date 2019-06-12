@@ -21,6 +21,7 @@ pub struct Location {
     pub process : String,
     pub shell_command : bool,
     pub processing_timestamp : bool,
+    pub complete_timestamp : bool,
     pub current_dir: Option<String>
 }
 
@@ -73,18 +74,21 @@ mod tests {
 
         assert_eq!(3, loc.locations.len());
 
-        assert_eq!(1000, loc.locations[0].readinessDelay);
-        assert_eq!("command", loc.locations[0].process);
-        assert_eq!(true, loc.locations[0].shell_command);
-        assert_eq!(false, loc.locations[0].processing_timestamp);
-        assert_eq!(Some("current_dir".to_owned()), loc.locations[0].current_dir);
-        assert_eq!(2000, loc.polling_delay);
-        assert_eq!(FileTask {
-            input:"input".to_string(),
-            processing: "processing".to_string(),
-            completed: Some("completed".to_string()),
-            failed: Some("failed".to_string())
-        }, loc.locations[0].file);
+         assert_eq!(Location {
+            readinessDelay: 1000,
+            process: "command".to_owned(),
+            shell_command: true,
+            processing_timestamp: false,
+            complete_timestamp: false,
+            current_dir: Some("current_dir".to_owned()),
+            file: FileTask {
+                input:"input".to_string(),
+                processing: "processing".to_string(),
+                completed: Some("completed".to_string()),
+                failed: Some("failed".to_string())
+            }
+         }, loc.locations[0]);
+
         assert_eq!(FileTask {
             input:"input".to_string(),
             processing: "processing".to_string(),
