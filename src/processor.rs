@@ -56,7 +56,6 @@ fn processFolder<P, Fx>(path: P, processItem : Fx) ->
                 let _ = processItem(&item)
                 .map_err(|err| error!("Error processing item: {:?}, message: {:?}",
                     item, err));
-                ()
             },
             Err(error) => error!("Error occurred in [{:?}], message: {:?}",
                 path.as_ref(),
@@ -164,11 +163,11 @@ fn processStagingItem(item : &fs::DirEntry, location : &Location) -> Result<(), 
 fn logProcessOutput(output : & Output) {
     info!("Command exit code: {:?}", output.status);
 
-    if output.stdout.len() > 0 {
+    if !output.stdout.is_empty() {
         info!("Stdout: {}", String::from_utf8_lossy(&output.stdout))
     }
 
-    if output.stderr.len() > 0 {
+    if !output.stderr.is_empty() {
         info!("Stderr: {}", String::from_utf8_lossy(&output.stderr))
     }
 }
@@ -219,7 +218,7 @@ fn addTimestamp<P>(fileName: P) -> PathBuf
                         .extension()
                         .and_then(|x| x.to_str())
                         .map(|x| ".".to_owned() + x)
-                        .unwrap_or("".to_owned());
+                        .unwrap_or_else(|| "".to_owned());
 
             path.set_file_name(
                 format!("{}_{}{}",
