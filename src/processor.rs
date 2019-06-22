@@ -3,12 +3,16 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::error::Error;
 use std::{thread, time};
-use std::process::{Command, Output};
+use std::process::{Command, Output, exit};
 use chrono::{DateTime, Local};
 
 use crate::locations::{Location, Locations};
 
-pub fn processLocations(locations : Locations) {
+pub fn processLocations(locations : Locations) -> bool {
+    if !verifyLocations(&locations) {
+        return false;
+    }
+
     loop {
         for location in &locations.locations {
             if checkLocation(location) {
@@ -20,6 +24,28 @@ pub fn processLocations(locations : Locations) {
 
         thread::sleep(time::Duration::from_millis(locations.polling_delay.into()));
     }
+}
+
+fn verifyLocations(locations : &Locations) -> bool {
+    locations.locations
+        .iter()
+        .all(|x| verifyLocation(x))
+}
+
+fn verifyLocation(location: &Location) -> bool {
+    verifyPath(&location.file.input) &&
+        verifyPath(&location.file.processing) &&
+        location.file.failed.as_ref().map_or(true, |x| verifyPath(&x)) &&
+        location.file.completed.as_ref().map_or(true, |x| verifyPath(&x))
+}
+
+fn verifyPath(path: &str) -> bool {
+    let result = Path::new(path).exists();
+    if !result {
+        error!("The path [{}] doesn't exist", path);
+    }
+
+    result
 }
 
 fn checkLocation(location : &Location) -> bool {
@@ -230,4 +256,52 @@ fn addTimestamp<P>(fileName: P) -> PathBuf
     }
 
     path
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+    use crate::locations::{FileTask};
+
+    #[test]
+    fn check_verify_locations() -> Result<(), Box<dyn Error>> {
+        let dir = tempdir().expect("Failed to create temorary directory");
+
+        let inputDir = dir.path().join("input");
+        let processingDir = dir.path().join("processing");
+        let completedDir = dir.path().join("completed");
+        let failedDir = dir.path().join("failed");
+
+        let _ = fs::create_dir(&inputDir)?;
+        let _ = fs::create_dir(&processingDir)?;
+        let _ = fs::create_dir(&completedDir)?;
+        let _ = fs::create_dir(&failedDir)?;
+
+        let testLocations = Locations {
+            polling_delay: 100,
+            locations: vec![Location{
+                readinessDelay: 0,
+                process: "process".to_owned(),
+                shell_command: true,
+                processing_timestamp: false,
+                complete_timestamp: true,
+                current_dir: None,
+                file: FileTask {
+                    input: inputDir.to_string_lossy().to_string(),
+                    processing: processingDir.to_string_lossy().to_string(),
+                    completed: Some(completedDir.to_string_lossy().to_string()),
+                    failed: Some(failedDir.to_string_lossy().to_string()),
+                }
+            }]
+        };
+
+        assert!(verifyLocations(&testLocations));
+
+        let _ = fs::remove_dir(processingDir)?;
+
+        assert!(!verifyLocations(&testLocations));
+
+        Ok(())
+    }
 }
