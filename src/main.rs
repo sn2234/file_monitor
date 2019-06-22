@@ -8,6 +8,8 @@ extern crate chrono;
 mod locations;
 mod processor;
 
+use std::process::exit;
+
 fn main() {
     initLogging();
 
@@ -17,7 +19,9 @@ fn main() {
 
     info!("Config: {:?}", locationsConfig);
 
-    processor::processLocations(locationsConfig);
+    if !processor::processLocations(locationsConfig) {
+        exit(-1);
+    }
 }
 
 fn initLogging() {

@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::error::Error;
 use std::{thread, time};
-use std::process::{Command, Output, exit};
+use std::process::{Command, Output};
 use chrono::{DateTime, Local};
 
 use crate::locations::{Location, Locations};
@@ -15,10 +15,13 @@ pub fn processLocations(locations : Locations) -> bool {
 
     loop {
         for location in &locations.locations {
-            if checkLocation(location) {
+            if verifyLocation(location) {
                 let _ = processLocation(location)
                     .map_err(|err| error!("Error processing location: {:?}, message: {:?}",
                         location, err));
+            }
+            else {
+                warn!("Invalid location: {:?}", location);
             }
         }
 
@@ -46,11 +49,6 @@ fn verifyPath(path: &str) -> bool {
     }
 
     result
-}
-
-fn checkLocation(location : &Location) -> bool {
-    Path::new(&location.file.input).exists() &&
-        Path::new(&location.file.processing).exists()
 }
 
 fn processLocation(location : &Location) -> Result<(), Box<dyn Error>> {
@@ -298,7 +296,7 @@ mod tests {
 
         assert!(verifyLocations(&testLocations));
 
-        let _ = fs::remove_dir(processingDir)?;
+        let _ = fs::remove_dir(completedDir)?;
 
         assert!(!verifyLocations(&testLocations));
 
