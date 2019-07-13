@@ -4,14 +4,78 @@ use std::result::Result;
 use serde_derive::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use serde::de::{Deserialize, Deserializer};
+use serde_json::Value;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+
+
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 pub struct FileTask {
     pub input : String,
     pub processing : String,
     pub completed : Option<String>,
     pub failed : Option<String>
+}
+
+fn normalizePath<P>(path: P) -> PathBuf
+    where
+        P : AsRef<Path> + Copy
+{
+
+    let mut buffer = PathBuf::new();
+
+    for comp in path.as_ref().components() {
+        buffer.push(comp);
+    }
+
+    buffer
+}
+
+impl<'de> Deserialize<'de> for FileTask {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        fn join(root: &str, leaf: &str) -> Option<String> {
+            let canonicalPath = normalizePath(root)
+                .join(leaf)
+                .to_str()
+                .map(|x| x.to_owned());
+            
+            canonicalPath
+        }
+
+        let nodeValue:Value  = Deserialize::deserialize(deserializer)?;
+
+        if let Some(pathToRoot) = nodeValue.as_str() {
+            return Ok(FileTask {
+                input: join(&pathToRoot, "input")
+                    .ok_or_else(|| serde::de::Error::custom("Bad input path"))?,
+                processing: join(&pathToRoot, "processing")
+                    .ok_or_else(|| serde::de::Error::custom("Bad processing path"))?,
+                completed: None,
+                failed: None
+            });
+        } else if let Some(nodeObject) = nodeValue.as_object() {
+
+            let extractField = |fieldName| nodeObject
+                .get(fieldName)
+                .map(|value| value.as_str())
+                .and_then(|x| x)
+                .map(|x| x.to_owned())
+                .ok_or_else(|| -> D::Error {serde::de::Error::missing_field(fieldName)});
+
+            Ok(FileTask {
+                input: extractField("input")?,
+                processing: extractField("processing")?,
+                completed: extractField("completed").ok(),
+                failed: extractField("failed").ok()
+            })
+        } else {
+            return Err(serde::de::Error::custom("unable to deserialize FileTask"));
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -70,9 +134,9 @@ mod tests {
 
     #[test]
     fn test_fromFile() {
-        let loc = Locations::fromFile("locations_test.json").unwrap();
+        let loc = Locations::fromFile("./test_data/locations_test.json").unwrap();
 
-        assert_eq!(3, loc.locations.len());
+        assert_eq!(5, loc.locations.len());
 
          assert_eq!(Location {
             readinessDelay: 1000,
@@ -101,5 +165,30 @@ mod tests {
             completed: Some("completed".to_string()),
             failed: None
         }, loc.locations[2].file);
+
+        let expected = FileTask {
+            input:normalizePath("/test/path/to/folder/input").to_str().unwrap().to_owned(),
+            processing:normalizePath("/test/path/to/folder/processing").to_str().unwrap().to_owned(),
+            completed: None,
+            failed: None
+        };
+
+        assert_eq!(expected, loc.locations[3].file);
+        assert_eq!(expected, loc.locations[4].file);
+    }
+
+    #[test]
+    fn test_normalize_path() {
+        assert_eq!(Path::new(""), normalizePath(""));
+        assert_eq!(Path::new(&format!("{}", std::path::MAIN_SEPARATOR)),
+            normalizePath(&format!("{}", std::path::MAIN_SEPARATOR)));
+        assert_eq!(Path::new("abc"), normalizePath("abc"));
+        assert_eq!(Path::new(".abc"), normalizePath(".abc"));
+        assert_eq!(Path::new(&format!("abc{}xxx", std::path::MAIN_SEPARATOR)),
+            normalizePath(&format!("abc{}xxx", std::path::MAIN_SEPARATOR)));
+        assert_eq!(Path::new(&format!("abc{}xxx", std::path::MAIN_SEPARATOR)),
+            normalizePath("abc\\xxx"));
+        assert_eq!(Path::new(&format!("abc{}xxx", std::path::MAIN_SEPARATOR)),
+            normalizePath("abc/xxx"));
     }
 }

@@ -37,6 +37,22 @@
             "shell_command":true,
             "processing_timestamp":false,
             "complete_timestamp":false
+        },
+        {
+            "file":"/test/path/to/folder",
+            "readinessDelay":10,
+            "process":"command",
+            "shell_command":true,
+            "processing_timestamp":false,
+            "complete_timestamp":false
+        },
+        {
+            "file":"/test/path/to/folder/",
+            "readinessDelay":10,
+            "process":"command",
+            "shell_command":true,
+            "processing_timestamp":false,
+            "complete_timestamp":false
         }
     ],
     "polling_delay":2000

@@ -17,7 +17,7 @@ appenders:
         limit: 10 mb
       roller:
         kind: fixed_window
-        pattern: "log/foo.{}.log"
+        pattern: "log/file_monitor.{}.log"
         base: 1
         count: 10
     encoder:
