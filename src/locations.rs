@@ -38,25 +38,23 @@ impl<'de> Deserialize<'de> for FileTask {
         D: Deserializer<'de>,
     {
         fn join(root: &str, leaf: &str) -> Option<String> {
-            let canonicalPath = normalizePath(root)
+            normalizePath(root)
                 .join(leaf)
                 .to_str()
-                .map(|x| x.to_owned());
-            
-            canonicalPath
+                .map(|x| x.to_owned())
         }
 
         let nodeValue:Value  = Deserialize::deserialize(deserializer)?;
 
         if let Some(pathToRoot) = nodeValue.as_str() {
-            return Ok(FileTask {
+            Ok(FileTask {
                 input: join(&pathToRoot, "input")
                     .ok_or_else(|| serde::de::Error::custom("Bad input path"))?,
                 processing: join(&pathToRoot, "processing")
                     .ok_or_else(|| serde::de::Error::custom("Bad processing path"))?,
                 completed: None,
                 failed: None
-            });
+            })
         } else if let Some(nodeObject) = nodeValue.as_object() {
 
             let extractField = |fieldName| nodeObject
@@ -73,7 +71,7 @@ impl<'de> Deserialize<'de> for FileTask {
                 failed: extractField("failed").ok()
             })
         } else {
-            return Err(serde::de::Error::custom("unable to deserialize FileTask"));
+            Err(serde::de::Error::custom("unable to deserialize FileTask"))
         }
     }
 }
